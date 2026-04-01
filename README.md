@@ -2,16 +2,16 @@
 
 > **An Enterprise-Grade Industrial Intelligence & Predictive Maintenance Platform**
 
-SmartSpare AI is a modern, full-stack application designed to revolutionize factory inventory management and predictive maintenance. Built with a highly scalable architecture, it bridges the gap between on-the-floor industrial operations and advanced LLM-driven analytics. 
+SmartSpare AI is a modern, full-stack application designed to revolutionize factory inventory management and predictive maintenance. Built with a highly scalable architecture, it bridges the gap between on the floor industrial operations and advanced LLM driven analytics. 
 
-Version 2.0 introduces a complete architectural overhaul, featuring a mathematically secure JWT authentication pipeline, strict database schema enforcement, and a lightning-fast React frontend.
+Version 2.0 introduces a complete architectural overhaul, featuring a mathematically secure JWT authentication pipeline, strict database schema enforcement, and a lightning fast React frontend.
 
 ## ✨ Key Features
 
-* **Secure Authentication Pipeline:** Industry-standard JWT (JSON Web Tokens) with bcrypt password hashing and strict route protection.
+* **Secure Authentication Pipeline:** Industry standard JWT (JSON Web Tokens) with bcrypt password hashing and strict route protection.
 * **Multi-Tenant Architecture:** Built in isolation using PostgreSQL UUIDs to securely segregate data across different factories and worker roles.
 * **Inventory Management:** Full CRUD capabilities for tracking industrial spare parts, SKUs, and machinery components.
-* **Modern UI/UX:** Responsive, component-driven frontend built with Next.js and styled with Tailwind CSS for a seamless user experience.
+* **Modern UI/UX:** Responsive, component driven frontend built with Next.js and styled with Tailwind CSS for a seamless user experience.
 * **AI Copilot Ready:** The foundation is primed for integrating Generative AI agents to predict maintenance schedules and forecast material demands.
 
 ## 🛠️ Tech Stack
