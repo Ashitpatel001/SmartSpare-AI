@@ -1,20 +1,27 @@
-# Web Framework
+
+# 1. Core Web Framework
 fastapi
 uvicorn[standard]
 
-# Database & ORM
+# 2. Database & ORM
 sqlalchemy
 asyncpg
 
-# Security & Authentication
+# 3. Security, Auth & Cryptography
 passlib[bcrypt]
+python-jose[cryptography]
 PyJWT
+
+# 4. Data Validation & Environment
 pydantic[email]
 pydantic-settings
-
-# Environment Variables
 python-dotenv
 
-# AI Copilot Integration
+# 5. AI Engine & LLM Integrations
 groq
 huggingface_hub
+langchain
+langchain-core
+langchain-groq
+langgraph
+langsmith
