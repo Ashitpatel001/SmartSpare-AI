@@ -17,7 +17,7 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Generates a signed JSON Web Token (JWT)."""
     to_encode = data.copy()
-    
+
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
