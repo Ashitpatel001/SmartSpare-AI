@@ -3,7 +3,10 @@ from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
-from app.models.inventory import SparePart
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.inventory import SparePart 
 
 class Factory(Base):
     __tablename__ = "factories"

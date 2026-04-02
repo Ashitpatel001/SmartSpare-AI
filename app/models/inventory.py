@@ -4,7 +4,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
 from app.models.tenant import Factory, User
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from app.models.tenant import Factory, User  # In inventory.py
+    
 class SparePart(Base):
     __tablename__ = "spare_parts"
 
