@@ -1,0 +1,20 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+
+# Database & ORM
+sqlalchemy
+asyncpg
+
+# Security & Authentication
+passlib[bcrypt]
+PyJWT
+pydantic[email]
+pydantic-settings
+
+# Environment Variables
+python-dotenv
+
+# AI Copilot Integration
+groq
+huggingface_hub
