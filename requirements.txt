@@ -1,17 +1,28 @@
+# ==========================================
+# SMARTSPARE AI 2.0 - MASTER DEPENDENCIES
+# ==========================================
+
+# 1. Core Web Framework
 fastapi
 uvicorn[standard]
+python-multipart
 
+# 2. Database & ORM
 sqlalchemy
 asyncpg
+psycopg2-binary
 
+# 3. Security, Auth & Cryptography
 passlib[bcrypt]
 python-jose[cryptography]
 PyJWT
 
+# 4. Data Validation & Environment
 pydantic[email]
 pydantic-settings
 python-dotenv
 
+# 5. AI Engine & LLM Integrations
 groq
 huggingface_hub
 langchain
@@ -21,3 +32,5 @@ langgraph
 langsmith
 langchain-chroma
 chromadb
+langchain-huggingface
+sentence-transformers
