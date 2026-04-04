@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 # LangChain & Groq Imports
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
-
+from app.models.inventory import SparePart
 from app.core.database import get_db
 from app.models.inventory import SparePart
 from app.models.tenant import Factory
@@ -83,7 +83,7 @@ async def update_spare_part(
         "data": part
     }
 
-# --- 4. The AI PDF Ingestion Endpoint (CREATE) ---
+
 @router.post("/parts/upload", tags=["Warehouse & Inventory Operations"])
 async def upload_inventory_pdf(
     file: UploadFile = File(...),
