@@ -19,4 +19,5 @@ langchain-core
 langchain-groq
 langgraph
 langsmith
+langchain-chroma
 chromadb
