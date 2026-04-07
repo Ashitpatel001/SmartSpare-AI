@@ -3,13 +3,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.router import api_router
+import os
+import uvicorn
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description="Backend Core for SmartSpare AI Factory Operations"
 )
-
+ 
 
 logging.basicConfig(
     level=logging.INFO,
