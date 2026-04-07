@@ -17,7 +17,7 @@ Version 2.0 introduces a complete architectural overhaul, featuring a mathematic
 ## 🛠️ Tech Stack
 
 **Frontend:**
-* Next.js (React Framework)
+* Next.js
 * Tailwind CSS
 * Lucide Icons
 
