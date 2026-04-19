@@ -115,7 +115,7 @@ async def upload_inventory_pdf(
             api_key=settings.GROQ_API_KEY
         )
         structured_llm = llm.with_structured_output(InventoryExtraction)
-
+        
         # Step C: Prompt the AI
         prompt = ChatPromptTemplate.from_messages([
             ("system", "You are an expert industrial data extraction agent. Extract all spare parts from the provided raw text. Ignore unrelated text, headers, and footers."),
