@@ -4,7 +4,7 @@
 
 SmartSpare AI is a modern, full-stack application designed to revolutionize factory inventory management and predictive maintenance. Built with a highly scalable architecture, it bridges the gap between on the floor industrial operations and advanced LLM driven analytics. 
 
-Version 2.0 introduces a complete architectural overhaul, featuring a mathematically secure JWT authentication pipeline, strict database schema enforcement, and a lightning fast React frontend.
+Version 2.0 introduces a complete architectural overhaul, featuring a mathematically secure JWT authentication pipeline, strict database schema enforcement, and a lightning fast Next.js frontend.
 
 ## ✨ Key Features
 
