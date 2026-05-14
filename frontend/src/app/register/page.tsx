@@ -11,20 +11,30 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ name: "", contact_number: "", email: "", password: "" });
 
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
+
+  const isValidEmail = (email: string) => email.endsWith(".com") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidName = (name: string) => /^[A-Za-z\s]+$/.test(name);
+  const isValidContact = (num: string) => /^\d+$/.test(num);
+
+  const isFormValid = 
+    isValidEmail(formData.email) && 
+    isValidName(formData.name) && 
+    isValidContact(formData.contact_number) && 
+    formData.password.length >= 6;
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorStatus(null);
 
     try {
-      // Send the data to your FastAPI backend
       await registerUser(formData.name, formData.contact_number, formData.email, formData.password);
-      
-      // If successful, bounce them to the login screen
       alert("Account created successfully! Please sign in.");
       router.push("/login");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration failed", error);
-      alert("Failed to create account. Email may already exist.");
+      setErrorStatus(error.message || "Email already exists or invalid data.");
     } finally {
       setIsLoading(false);
     }
@@ -56,6 +66,11 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
+          {errorStatus && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-medium animate-pulse">
+              ⚠️ {errorStatus}
+            </div>
+          )}
           {/* Full Name Input */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -68,8 +83,11 @@ export default function RegisterPage() {
                 placeholder="John Doe" 
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-4 py-3 pl-10 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm" 
+                className={`w-full px-4 py-3 pl-10 rounded-lg bg-slate-50 border ${formData.name && !isValidName(formData.name) ? 'border-red-400' : 'border-slate-200'} focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm`} 
               />
+              {formData.name && !isValidName(formData.name) && (
+                <p className="text-[10px] text-red-500 mt-1 ml-1 font-bold">Only alphabets and spaces allowed</p>
+              )}
               <svg className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -88,8 +106,11 @@ export default function RegisterPage() {
                 placeholder="1234567890" 
                 value={formData.contact_number}
                 onChange={(e) => setFormData({...formData, contact_number: e.target.value})}
-                className="w-full px-4 py-3 pl-10 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm" 
+                className={`w-full px-4 py-3 pl-10 rounded-lg bg-slate-50 border ${formData.contact_number && !isValidContact(formData.contact_number) ? 'border-red-400' : 'border-slate-200'} focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm`} 
               />
+              {formData.contact_number && !isValidContact(formData.contact_number) && (
+                <p className="text-[10px] text-red-500 mt-1 ml-1 font-bold">Only integers allowed</p>
+              )}
               <svg className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
@@ -108,8 +129,11 @@ export default function RegisterPage() {
                 placeholder="engineer@factory.com" 
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full px-4 py-3 pl-10 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm" 
+                className={`w-full px-4 py-3 pl-10 rounded-lg bg-slate-50 border ${formData.email && !isValidEmail(formData.email) ? 'border-red-400' : 'border-slate-200'} focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all text-sm`} 
               />
+              {formData.email && !isValidEmail(formData.email) && (
+                <p className="text-[10px] text-red-500 mt-1 ml-1 font-bold">Must be a valid .com email</p>
+              )}
               <svg className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -139,7 +163,7 @@ export default function RegisterPage() {
           {/* Submit Button */}
           <button 
             type="submit" 
-            disabled={isLoading || !formData.email || !formData.password || !formData.name || !formData.contact_number}
+            disabled={isLoading || !isFormValid}
             className="w-full flex items-center justify-center gap-2 bg-[#5A6373] hover:bg-[#474F5C] text-white font-medium py-3 rounded-lg transition-colors mt-4 text-sm disabled:opacity-70"
           >
             {isLoading ? (

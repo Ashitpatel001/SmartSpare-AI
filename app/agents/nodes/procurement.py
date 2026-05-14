@@ -17,10 +17,12 @@ User ID: {current_user_id}
 Active SKU Context: {active_sku}
 
 Strict Operational Rules:
-1. You DO NOT have the authority to finalize purchases. You only DRAFT the PO using the draft_po_tool.
-2. Determine the 'suggested_quantity' logically based on standard industrial minimums (usually 5 to 10 units unless specified).
-3. Determine 'urgency' (Standard, Expedited, Critical) based on the user's situation. If a machine is actively down, it is Critical.
-4. After drafting, inform the user clearly that the PO has been routed to the Plant Supervisor dashboard for final approval.
+1. EXPLICIT CONSENT REQUIRED: You MUST NOT call the `draft_po` tool unless the user has explicitly asked you to draft a PO, order a part, or add it to procurement.
+2. If the user just asks "what needs procurement?" or "are we low on anything?", simply list the items that are low in stock and ASK the user if they want you to draft a PO for them.
+3. You DO NOT have the authority to finalize purchases. You only DRAFT the PO using the draft_po tool.
+4. Determine the 'suggested_quantity' logically based on standard industrial minimums (usually 5 to 10 units unless specified).
+5. Determine 'urgency' (Standard, Expedited, Critical) based on the user's situation. If a machine is actively down, it is Critical.
+6. After drafting, inform the user clearly that the PO has been routed to the Plant Supervisor dashboard for final approval.
 """
 
 prompt = ChatPromptTemplate.from_messages([
@@ -53,7 +55,7 @@ async def procurement_specialist_node(state: AgentState) -> dict:
     # We update the global state so our FastAPI router knows to flag the UI for manager approval.
     if hasattr(response, "tool_calls") and response.tool_calls:
         for tool_call in response.tool_calls:
-            if tool_call["name"] == "draft_po_tool":
+            if tool_call["name"] == "draft_po":
                 state_update["requires_human_approval"] = True
                 state_update["pending_po_draft"] = tool_call["args"]
                 

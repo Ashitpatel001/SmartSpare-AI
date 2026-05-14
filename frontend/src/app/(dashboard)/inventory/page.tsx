@@ -17,7 +17,13 @@ export default function InventoryPage() {
     name: "", sku: "", current_stock: 0, minimum_threshold: 5, location_bin: ""
   });
 
-  const { data, isLoading, isError } = useQuery({ queryKey: ["inventory"], queryFn: getInventory });
+  const { data, isLoading, isError } = useQuery({ 
+    queryKey: ["inventory"], 
+    queryFn: getInventory,
+    refetchInterval: 5000,  // Poll PostgreSQL every 5 seconds for real-time updates
+    staleTime: 0,           // Always treat data as stale so invalidation triggers immediate refetch
+  });
+  
   const parts = Array.isArray(data) ? data : [];
   const filteredParts = parts.filter((part: any) => 
     part.name.toLowerCase().includes(searchQuery.toLowerCase()) || 

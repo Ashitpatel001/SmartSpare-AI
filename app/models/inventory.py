@@ -7,7 +7,7 @@ from app.models.tenant import Factory, User
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.models.tenant import Factory, User  # In inventory.py
+    from app.models.tenant import Factory, User  
     
 class SparePart(Base):
     __tablename__ = "spare_parts"
@@ -37,9 +37,11 @@ class InventoryTransaction(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     factory_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("factories.id", ondelete="CASCADE"), nullable=False)
     part_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("spare_parts.id"), nullable=False)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=True)
     transaction_type: Mapped[str] = mapped_column(String(20), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    urgency: Mapped[str] = mapped_column(String(20), nullable=False, default="normal")
     timestamp: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

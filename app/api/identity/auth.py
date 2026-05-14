@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from app.core.database import get_db
 from app.core.security import verify_password, create_access_token, get_password_hash
-from app.models.tenant import User
+from app.models.tenant import User, Factory
 
 router = APIRouter()
 
@@ -28,7 +28,6 @@ class UserLogin(BaseModel):
 
 class UserRegister(BaseModel):
     name: str
-    contact_number: str
     email: EmailStr
     password: str
 
@@ -43,12 +42,6 @@ class UserRegister(BaseModel):
     def validate_name(cls, v):
         if not re.match(r"^[A-Za-z\s]+$", v):
             raise ValueError('Name should only contain alphabets and spaces')
-        return v
-
-    @validator('contact_number')
-    def validate_contact_number(cls, v):
-        if not re.match(r"^\d+$", v):
-            raise ValueError('Contact number strictly requires integers')
         return v
 
 
@@ -95,15 +88,23 @@ async def register_new_user(
 
     # Hash the password using bcrypt
     hashed_pw = get_password_hash(user_data.password)
-    default_factory_id = uuid4()
+    
+    # Dynamically find or create a valid Factory to avoid constraint violations
+    factory_result = await db.execute(select(Factory).limit(1))
+    factory = factory_result.scalar_one_or_none()
+    
+    if not factory:
+        factory = Factory(name="Default Operations Factory", location="Headquarters")
+        db.add(factory)
+        await db.commit()
+        await db.refresh(factory)
     
     # Create the user record
     new_user = User(
         name=user_data.name,
-        contact_number=user_data.contact_number,
         email=user_data.email,
         hashed_password=hashed_pw,
-        factory_id=default_factory_id,
+        factory_id=factory.id,
         role="admin", 
     )
     

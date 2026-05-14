@@ -1,10 +1,9 @@
 import { apiClient } from "@/lib/axios";
 
-// Your existing chat function might be here
-export const sendChatMessage = async (message: string, factoryId: string) => {
+// Chat function — factory_id is resolved server-side from PostgreSQL
+export const sendChatMessage = async (message: string) => {
   const response = await apiClient.post("/api/intelligence/chat", {
-    message: message,
-    factory_id: factoryId
+    message: message
   });
   return response.data;
 };

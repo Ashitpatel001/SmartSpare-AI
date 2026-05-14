@@ -1,51 +1,87 @@
 import logging
 from uuid import UUID
-from typing import List, Dict, Any
-
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-from langchain_chroma import Chroma  # Upgraded from langchain_community
-from langchain_huggingface import HuggingFaceEmbeddings  # Swapped from OpenAI
-from langchain_core.documents import Document
-
-from app.core.config import settings
+from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# Lazy-loaded globals — these are initialized on first use, not at import time.
+# This prevents the entire intelligence module from crashing if Docker/ChromaDB is offline.
+_chroma_client = None
+_chroma_initialized = False
+_embedding_function = None
 
-try:
-    chroma_client = chromadb.HttpClient(
-        host="localhost", # Use localhost since Python is running outside Docker right now
-        port=8000,
-        settings=ChromaSettings(allow_reset=False)
-    )
-    logger.info("Successfully connected to Dockerized ChromaDB.")
-except Exception as e:
-    logger.error(f"Failed to connect to ChromaDB container. Is Docker running? Error: {e}")
-    chroma_client = None
+
+def _get_embedding_function():
+    """Lazy-load the embedding model on first use."""
+    global _embedding_function
+    if _embedding_function is None:
+        try:
+            from langchain_huggingface import HuggingFaceEmbeddings
+            _embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            logger.info("HuggingFace embedding model loaded successfully.")
+        except Exception as e:
+            logger.error(f"Failed to load embedding model: {e}")
+    return _embedding_function
+
+
+def _get_chroma_client():
+    """Lazy-connect to ChromaDB on first use. Returns None if unavailable."""
+    global _chroma_client, _chroma_initialized
+    
+    if _chroma_initialized:
+        return _chroma_client
+    
+    _chroma_initialized = True  # Only attempt once
+    
+    try:
+        import chromadb
+        from chromadb.config import Settings as ChromaSettings
+        
+        _chroma_client = chromadb.HttpClient(
+            host="localhost",
+            port=8001,
+            settings=ChromaSettings(allow_reset=False)
+        )
+        _chroma_client.heartbeat()
+        logger.info("Successfully connected to Dockerized ChromaDB.")
+    except Exception as e:
+        logger.warning(f"ChromaDB is offline (Docker may not be running). RAG features disabled. Error: {e}")
+        _chroma_client = None
+    
+    return _chroma_client
 
 
 # Multi-Tenant Vector Store Manager
-def get_factory_vector_store(factory_id: UUID) -> Chroma | None:
+def get_factory_vector_store(factory_id: UUID):
     """
     Retrieves or creates a specific ChromaDB collection for a given factory.
     This guarantees that Vector searches never cross-pollinate tenant data.
+    Returns None if ChromaDB is unavailable.
     """
-    if not chroma_client:
-        logger.error("ChromaDB client is offline.")
+    client = _get_chroma_client()
+    embeddings = _get_embedding_function()
+    
+    if not client or not embeddings:
+        logger.warning("ChromaDB or embeddings unavailable. Vector store cannot be created.")
         return None
         
-    collection_name = f"factory_{str(factory_id).replace('-', '_')}"
-    
-    return Chroma(
-        client=chroma_client,
-        collection_name=collection_name,
-        embedding_function=embedding_function
-    )
+    try:
+        from langchain_chroma import Chroma
+        
+        collection_name = f"factory_{str(factory_id).replace('-', '_')}"
+        
+        return Chroma(
+            client=client,
+            collection_name=collection_name,
+            embedding_function=embeddings
+        )
+    except Exception as e:
+        logger.error(f"Failed to create vector store for factory {factory_id}: {e}")
+        return None
+
 
 # Asynchronous Document Ingestion
-async def ingest_documents(factory_id: UUID, documents: List[Document]) -> bool:
+async def ingest_documents(factory_id: UUID, documents: list) -> bool:
     """
     Takes chunked documents (from PDFs or OCR) and embeds them into the factory's vector index.
     """
@@ -54,7 +90,6 @@ async def ingest_documents(factory_id: UUID, documents: List[Document]) -> bool:
         if not vector_store:
             return False
         
-        # In actual deployment, consider running this in a background executor
         vector_store.add_documents(documents=documents)
         logger.info(f"Successfully ingested {len(documents)} chunks for factory {factory_id}")
         return True
@@ -63,18 +98,19 @@ async def ingest_documents(factory_id: UUID, documents: List[Document]) -> bool:
         return False
 
 
-# 5. Semantic Search Engine
+# Semantic Search Engine
 async def search_industrial_manuals(factory_id: UUID, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
     """
     Performs a semantic similarity search against the factory's manuals.
     Returns the top K most relevant text chunks along with their source metadata.
+    Returns empty list gracefully if ChromaDB is offline.
     """
     try:
         vector_store = get_factory_vector_store(factory_id)
         if not vector_store:
+            logger.info("Vector store unavailable. Returning empty results for manual search.")
             return []
         
-        # Execute a similarity search returning both the document and the relevance score
         results = vector_store.similarity_search_with_score(query, k=top_k)
         
         formatted_results = []

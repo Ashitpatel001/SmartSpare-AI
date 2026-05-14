@@ -34,26 +34,26 @@ def supervisor_router(state: AgentState) -> Literal["query_specialist", "diagnos
     return "__end__"
 
 # We build dedicated routers for each specialist
-def query_router(state: AgentState) -> Literal["query_tools", "supervisor"]:
+def query_router(state: AgentState) -> Literal["query_tools", "__end__"]:
     messages = state.get("messages", [])
     last_message = messages[-1] if messages else None
     if last_message and hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "query_tools"
-    return "supervisor"
+    return "__end__"
 
-def diagnosis_router(state: AgentState) -> Literal["diagnosis_tools", "supervisor"]:
+def diagnosis_router(state: AgentState) -> Literal["diagnosis_tools", "__end__"]:
     messages = state.get("messages", [])
     last_message = messages[-1] if messages else None
     if last_message and hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "diagnosis_tools"
-    return "supervisor"
+    return "__end__"
 
-def procurement_router(state: AgentState) -> Literal["procurement_tools", "supervisor"]:
+def procurement_router(state: AgentState) -> Literal["procurement_tools", "__end__"]:
     messages = state.get("messages", [])
     last_message = messages[-1] if messages else None
     if last_message and hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "procurement_tools"
-    return "supervisor"
+    return "__end__"
 
 # Construct the State Machine
 workflow = StateGraph(AgentState)
@@ -90,17 +90,17 @@ workflow.add_conditional_edges(
 workflow.add_conditional_edges(
     "query_specialist",
     query_router,
-    {"query_tools": "query_tools", "supervisor": "supervisor"}
+    {"query_tools": "query_tools", "__end__": END}
 )
 workflow.add_conditional_edges(
     "diagnosis_specialist",
     diagnosis_router,
-    {"diagnosis_tools": "diagnosis_tools", "supervisor": "supervisor"}
+    {"diagnosis_tools": "diagnosis_tools", "__end__": END}
 )
 workflow.add_conditional_edges(
     "procurement_specialist",
     procurement_router,
-    {"procurement_tools": "procurement_tools", "supervisor": "supervisor"}
+    {"procurement_tools": "procurement_tools", "__end__": END}
 )
 
 workflow.add_edge("query_tools", "query_specialist")

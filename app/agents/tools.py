@@ -13,7 +13,7 @@ from app.rag.vector_db import search_industrial_manuals
 
 @tool("check_inventory", args_schema=CheckInventoryInput)
 async def check_inventory(factory_id: str, query: str) -> str:
-    """Use this tool to search the PostgreSQL database for spare parts and stock levels."""
+    """Use this tool to search the PostgreSQL database for spare parts and stock levels. Returns all matching parts."""
     print(f"\n---> [TOOL START] check_inventory triggered by Agent")
     print(f"---> [INPUTS] Factory: {factory_id} | Query: {query}")
     
@@ -26,21 +26,33 @@ async def check_inventory(factory_id: str, query: str) -> str:
                 SparePart.name.ilike(f"%{query}%")
             )
             result = await db.execute(stmt)
-            part = result.scalar_one_or_none()
+            parts = result.scalars().all()
             
-            if not part:
-                msg = f"Stock is 0. Part '{query}' not found. DO NOT search again. Immediately proceed to draft a PO."
+            if not parts:
+                # Also try searching by SKU
+                stmt_sku = select(SparePart).where(
+                    SparePart.factory_id == valid_tenant_id,
+                    SparePart.sku.ilike(f"%{query}%")
+                )
+                result_sku = await db.execute(stmt_sku)
+                parts = result_sku.scalars().all()
+            
+            if not parts:
+                msg = f"No parts matching '{query}' found in the database. Stock is 0. Ask the user if they would like to draft a Purchase Order."
                 print(f"---> [TOOL RESULT] {msg}\n")
                 return msg
             
-            output = CheckInventoryOutput(
-                status="Success",
-                quantity=part.current_stock,
-                location=part.location_bin or "Unassigned"
-            )
-            final_json = output.model_dump_json()
-            print(f"---> [TOOL RESULT] {final_json}\n")
-            return final_json
+            # Format all matching parts into a readable summary
+            parts_summary = []
+            for part in parts:
+                parts_summary.append(
+                    f"- {part.name} (SKU: {part.sku}) | Stock: {part.current_stock} units | "
+                    f"Category: {part.category or 'N/A'} | Location: {part.location_bin or 'Unassigned'}"
+                )
+            
+            result_text = f"Found {len(parts)} matching part(s):\n" + "\n".join(parts_summary)
+            print(f"---> [TOOL RESULT] {result_text}\n")
+            return result_text
             
     except Exception as e:
         return f"Database query failed: {str(e)}. Stop and ask human for help."
@@ -59,8 +71,6 @@ async def draft_po(factory_id: str, part_name: str, quantity: int, urgency: str 
         valid_tenant_id = UUID(factory_id)
         
         async with AsyncSessionLocal() as db:
-            agent_uuid = uuid.uuid4() 
-            
             # 1. Look for the part first
             stmt = select(SparePart).where(
                 SparePart.factory_id == valid_tenant_id,
@@ -81,20 +91,22 @@ async def draft_po(factory_id: str, part_name: str, quantity: int, urgency: str 
                     location_bin="Pending Arrival"
                 )
                 db.add(part)
-                await db.flush() # Saves to DB and generates the required part.id
+                await db.flush()
             
-            # 3. Create the PO using the valid part_id and a strictly 20-char string
+            # 3. Create the PO with status and urgency fields
             new_po = InventoryTransaction(
                 factory_id=valid_tenant_id,
                 part_id=part.id, 
-                user_id=agent_uuid, 
+                user_id=None,
                 transaction_type="PO_DRAFT", 
-                quantity=quantity
+                quantity=quantity,
+                status="pending",
+                urgency=urgency
             )
             db.add(new_po)
             await db.commit()
             
-        success_msg = f"SUCCESS: System Action: PO Drafted for {quantity}x {part.name}. Status: Pending Human Approval."
+        success_msg = f"SUCCESS: PO Drafted for {quantity}x {part.name} (Urgency: {urgency}). Status: Pending Human Approval on the Procurement Console."
         print(f"---> [TOOL RESULT] {success_msg}\n")
         return success_msg
         
@@ -120,7 +132,12 @@ async def search_manuals(factory_id: str, symptom_or_error: str) -> str:
         )
         
         if not results:
-            return f"No manuals found regarding: {symptom_or_error}"
+            return (
+                f"No manuals found regarding: {symptom_or_error}. "
+                f"The RAG manual database may be offline or no documents have been indexed yet. "
+                f"Please provide your best diagnosis based on general industrial maintenance knowledge, "
+                f"and recommend the user consult their OEM manual for specific procedures."
+            )
             
         formatted_results = "\n\n".join([r["content"] for r in results])
         return f"Found the following manual excerpts:\n{formatted_results}"
@@ -128,6 +145,9 @@ async def search_manuals(factory_id: str, symptom_or_error: str) -> str:
     except ValueError:
         return "System Error: Invalid Factory ID provided. Authentication blocked."
     except Exception as e:
-        return f"CRITICAL: Vector Database is offline. Stop searching manuals and proceed directly to checking inventory. Error: {str(e)}"
+        return (
+            f"Vector search encountered an issue: {str(e)}. "
+            f"Proceed with your general maintenance knowledge to help the user."
+        )
 
 DIAGNOSIS_TOOLS = [search_manuals]

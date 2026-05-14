@@ -10,7 +10,7 @@ from app.models.tenant import User
 
 router = APIRouter()
 
-# 1. API Contracts (Pydantic Schemas)
+# API Contracts (Pydantic Schemas)
 class ChatRequest(BaseModel):
     message: str = Field(..., description="The natural language query from the factory worker.")
     thread_id: Optional[str] = Field(None, description="Provide this to continue an existing conversation.")
@@ -21,7 +21,7 @@ class ChatResponse(BaseModel):
     status: str
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-# 2. The Core Execution Endpoint
+# The Core Execution Endpoint
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_agent(
     request: ChatRequest,

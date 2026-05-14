@@ -15,13 +15,12 @@ export default function ChatInterface() {
     {
       id: "welcome",
       role: "agent",
-      content: "System online. I am connected to the live PostgreSQL inventory and ChromaDB manuals. How can I assist the factory floor today?"
+      content: "System online. I am connected to the live PostgreSQL inventory. How can I assist the factory floor today?"
     }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ACTIVE_FACTORY_ID = "c167061b-b702-477c-9be9-244e32e59730";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,7 +34,7 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      const response = await sendChatMessage(userMessage.content, ACTIVE_FACTORY_ID);
+      const response = await sendChatMessage(userMessage.content);
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
@@ -43,10 +42,11 @@ export default function ChatInterface() {
       };
       setMessages((prev) => [...prev, agentMessage]);
     } catch (error: any) {
+      const errorDetail = error.response?.data?.detail || error.message || "Unknown error";
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "agent",
-        content: `System Error: Check the backend connection.`
+        content: `Connection issue: ${errorDetail}. Please check the backend server.`
       }]);
     } finally {
       setIsLoading(false);
