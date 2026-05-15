@@ -38,7 +38,8 @@ class InventoryExtraction(BaseModel):
 
 class PartUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Updated name of the part")
-    quantity: Optional[int] = Field(None, description="Updated stock quantity")
+    sku: Optional[str] = Field(None, description="Updated SKU of the part")
+    current_stock: Optional[int] = Field(None, description="Updated stock quantity")
     category: Optional[str] = Field(None, description="Updated category")
     location_bin: Optional[str] = Field(None, description="Updated warehouse location")
 
@@ -66,8 +67,10 @@ async def update_spare_part(
 
     if update_data.name is not None:
         part.name = update_data.name
-    if update_data.quantity is not None:
-        part.current_stock = update_data.quantity
+    if update_data.sku is not None:
+        part.sku = update_data.sku
+    if update_data.current_stock is not None:
+        part.current_stock = update_data.current_stock
     if update_data.category is not None:
         part.category = update_data.category
     if update_data.location_bin is not None:
